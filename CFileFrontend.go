@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	. "github.com/logrusorgru/aurora"
-	"github.com/opensatelliteproject/SatHelperApp/Frontend"
 	"github.com/quan-to/slog"
 	"github.com/racerxdl/fastconvert"
 	"os"
@@ -13,6 +12,20 @@ import (
 	"time"
 )
 
+const SampleTypeFloatIQ = 0
+const SampleTypeS16IQ = 1
+const SampleTypeS8IQ = 2
+
+type SampleCallbackData struct {
+	ComplexArray []complex64
+	Int16Array   []int16
+	Int8Array    []int8
+	SampleType   int
+	NumSamples   int
+}
+
+type SamplesCallback func(data SampleCallbackData)
+
 const CFileFrontendBufferSize = 65535
 
 // region Struct Definition
@@ -20,7 +33,7 @@ type CFileFrontend struct {
 	sync.Mutex
 	running         bool
 	filename        string
-	cb              Frontend.SamplesCallback
+	cb              SamplesCallback
 	sampleRate      uint32
 	centerFrequency uint32
 	sampleBuffer    []complex64
@@ -65,7 +78,7 @@ func (f *CFileFrontend) EnableFastAsPossible() {
 
 // endregion
 // region Setters
-func (f *CFileFrontend) SetSamplesAvailableCallback(cb Frontend.SamplesCallback) {
+func (f *CFileFrontend) SetSamplesAvailableCallback(cb SamplesCallback) {
 	f.cb = cb
 }
 func (f *CFileFrontend) SetSampleRate(sampleRate uint32) uint32 {
@@ -134,8 +147,8 @@ func (f *CFileFrontend) Start() {
 				}
 				fastconvert.ReadByteArrayToComplex64Array(buff, frontend.sampleBuffer)
 				if frontend.cb != nil {
-					var cbData = Frontend.SampleCallbackData{
-						SampleType:   Frontend.SampleTypeFloatIQ,
+					var cbData = SampleCallbackData{
+						SampleType:   SampleTypeFloatIQ,
 						NumSamples:   len(frontend.sampleBuffer),
 						ComplexArray: frontend.sampleBuffer,
 					}

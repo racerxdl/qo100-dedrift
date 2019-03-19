@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/opensatelliteproject/SatHelperApp/Frontend"
 	"github.com/quan-to/slog"
 	"github.com/racerxdl/go.fifo"
 	"github.com/racerxdl/qo100-dedrift/rtltcp"
@@ -269,7 +268,7 @@ func main() {
 
 	src := NewCFileFrontend(inputIQ)
 	src.SetSampleRate(SampleRate)
-	src.SetSamplesAvailableCallback(func(data Frontend.SampleCallbackData) {
+	src.SetSamplesAvailableCallback(func(data SampleCallbackData) {
 		sampleFifo.Add(data.ComplexArray)
 	})
 
