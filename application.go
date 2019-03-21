@@ -6,8 +6,9 @@ import (
 	"github.com/quan-to/slog"
 	"github.com/racerxdl/go.fifo"
 	"github.com/racerxdl/qo100-dedrift/rtltcp"
+	"github.com/racerxdl/qo100-dedrift/ui"
 	"github.com/racerxdl/segdsp/dsp"
-	"math/cmplx"
+	"math"
 	"net"
 	"os"
 	"os/signal"
@@ -186,6 +187,7 @@ func swapAndTrimSlices(a *[]complex64, b *[]complex64, length int) {
 var sampleFifo = fifo.NewQueue()
 var dspRunning bool
 var lastShiftReport = time.Now()
+var lastFFTUpdate = time.Now()
 
 func DSP() {
 	log.Info("Starting DSP Loop")
@@ -222,19 +224,21 @@ func DSP() {
 		l = costas.WorkBuffer(a, b)
 		swapAndTrimSlices(&a, &b, l)
 		//
-		if time.Since(lastShiftReport) > 2*time.Second {
-			slog.Info("Offset: %f Hz", costas.GetFrequencyHz(SampleRate/WorkDecimation))
+		if time.Since(lastShiftReport) > time.Second {
+			slog.Info("Offset: %f Hz", costas.GetFrequency()*(SampleRate/WorkDecimation)/(math.Pi*2))
 			lastShiftReport = time.Now()
+			partialFFT.SetCenterFrequency(float64(BeaconOffset + costas.GetFrequencyHz(SampleRate/WorkDecimation)))
 		}
 
-		offset := costas.GetFrequency() // / (2*math.Pi)
-
-		var shift = float64(offset)
-
-		rotator.SetPhaseIncrement(complex64(cmplx.Exp(complex(0, -shift))))
-		//rotator.WorkInline(originalData)
+		rotator.SetCenterFrequency(-costas.GetFrequencyHz(SampleRate/WorkDecimation), SampleRate/WorkDecimation)
+		rotator.WorkInline(originalData)
 
 		PostSamples(originalData)
+		if time.Since(lastFFTUpdate) > time.Second/60 {
+			fullFFT.UpdateSamples(originalData)
+			partialFFT.UpdateSamples(a)
+			lastFFTUpdate = time.Now()
+		}
 	}
 }
 
@@ -256,14 +260,36 @@ const (
 	//inputIQ = "/media/ELTN/HAM/baseband/QO-100/SDRSharp_20190311_011013Z_739764000Hz_IQ_56250-N.cfile"
 )
 
+var fullFFT *ui.FFTUI
+var partialFFT *ui.FFTUI
+
 func main() {
+	log.Info("Starting UI")
+	ui.InitNK()
+
+	fullFFT = ui.MakeFFTUI("Full FFT", SampleRate, 50e6)
+	fullFFT.SetWidth(1000)
+	fullFFT.SetHeight(600)
+	fullFFT.SetFFT2WTFRatio(0.6)
+	ui.AddComponent(fullFFT)
+
+	partialFFT = ui.MakeFFTUI("Beacon", SampleRate/WorkDecimation, 0)
+	partialFFT.SetWidth(600)
+	partialFFT.SetHeight(600)
+	partialFFT.SetX(1000)
+	partialFFT.SetFFT2WTFRatio(0.6)
+	partialFFT.SetOffset(-10)
+	partialFFT.SetScale(8)
+	partialFFT.SetVerticalGridSteps(4)
+	ui.AddComponent(partialFFT)
+
 	outSampleRate := SampleRate / WorkDecimation
 	translatorTaps := dsp.MakeLowPass(64, SampleRate, outSampleRate/2-15e3, 15e3)
 	slog.Info("Translator Taps Length: %d", len(translatorTaps))
 	translator = dsp.MakeFrequencyTranslator(WorkDecimation, -BeaconOffset, SampleRate, translatorTaps)
 	agc = dsp.MakeAttackDecayAGC(0.01, 0.2, 1, 10, 65536)
 	costas = dsp.MakeCostasLoop2(0.01)
-	rotator = dsp.MakeRotator()
+	rotator = dsp.MakeRotatorWithFrequency(0, SampleRate)
 
 	src := NewCFileFrontend(inputIQ)
 	src.SetSampleRate(SampleRate)
@@ -272,6 +298,7 @@ func main() {
 	})
 
 	slog.Info("Output Sample Rate: %f", outSampleRate)
+	fpsTicker := time.NewTicker(time.Second / 60)
 
 	dspRunning = true
 	go DSP()
@@ -281,6 +308,21 @@ func main() {
 	var sig chan os.Signal
 	sig = make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
-	<-sig
+
+	running := true
+
+	for running {
+		select {
+		case <-fpsTicker.C:
+			if !ui.Loop() {
+				running = false
+				fpsTicker.Stop()
+			}
+		case <-sig:
+			log.Info("Received SIGINT")
+			running = false
+		}
+	}
+
 	dspRunning = false
 }
