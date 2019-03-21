@@ -26,7 +26,7 @@ type SampleCallbackData struct {
 
 type SamplesCallback func(data SampleCallbackData)
 
-const CFileFrontendBufferSize = 65535
+const CFileFrontendBufferSize = 16384
 
 // region Struct Definition
 type CFileFrontend struct {
