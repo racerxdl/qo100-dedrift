@@ -238,12 +238,11 @@ func DSP() {
 
 		fs := costas.GetFrequencyShift()
 		fs = interp.Work(fs)
-		sensitivity := float32(-1.0 / WorkDecimation)
 
 		for i, v := range fs {
 			c := tools.PhaseToComplex(phase)
 			originalData[i] *= c
-			phase += v * sensitivity
+			phase -= v
 			if phase > TwoPi || phase < MinusTwoPi {
 				phase = phase*OneOverTwoPi - float32(int(phase*OneOverTwoPi))
 				phase = phase * TwoPi
