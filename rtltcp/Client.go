@@ -143,7 +143,7 @@ func (client *Client) handshake() error {
 		return err
 	}
 
-	log.Debug("Received Handshake. Tuner Type: %s - ", TunerTypeToName[client.dongleInfo.TunerType])
+	log.Debug("Received Handshake. Tuner Type: %s", TunerTypeToName[client.dongleInfo.TunerType])
 
 	return nil
 }

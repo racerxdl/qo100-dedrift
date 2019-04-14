@@ -1,0 +1,24 @@
+[Source]
+  Address = "127.0.0.1:1235"
+  SampleRate = 1800000
+  CenterFrequency = 740000000
+
+[Server]
+  RTLTCPAddress = ":1234"
+  HTTPAddress = ":8080"
+  AllowControl = true
+
+[Processing]
+  BeaconOffset = 143000.0
+  WorkDecimation = 32
+  [Processing.AGC]
+    AttackRate = 0.01
+    DecayRate = 0.2
+    Reference = 1.0
+    Gain = 10.0
+    MaxGain = 65535.0
+  [Processing.CostasLoop]
+    Bandwidth = 0.01
+  [Processing.Translation]
+    TransitionWidth = 15000.0
+    Gain = 64.0
