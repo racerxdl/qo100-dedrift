@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/binary"
 	"flag"
 	"github.com/quan-to/slog"
 	"github.com/racerxdl/qo100-dedrift/config"
 	"github.com/racerxdl/qo100-dedrift/rtltcp"
-	"github.com/racerxdl/segdsp/dsp"
 	"os"
 	"os/signal"
 	"runtime/pprof"
@@ -13,15 +13,12 @@ import (
 
 const (
 	ConfigFileName = "qo100.toml"
-	//SampleRate     = 1800e3
-	//CenterFrequency = 739810000
-	//BeaconOffset   = 125e3
-	//CenterFrequency = 740000000
-	//BeaconOffset    = 140e3
-	//WorkDecimation  = 32
-	//rtlServer = "187.85.15.201:1234"
-	//rtlServer = "127.0.0.1:1235"
 )
+
+func init() {
+	slog.SetShowLines(true)
+	slog.SetScopeLength(26)
+}
 
 var log = slog.Scope("Application")
 var server *rtltcp.Server
@@ -58,13 +55,7 @@ func main() {
 		slog.Fatal("Error loading configuration file at %s: %s", ConfigFileName, err)
 	}
 
-	outSampleRate := float64(pc.Source.SampleRate) / float64(pc.Processing.WorkDecimation)
-	translatorTaps := dsp.MakeLowPass(pc.Processing.Translation.Gain, float64(pc.Source.SampleRate), (outSampleRate/2)-pc.Processing.Translation.TransitionWidth, pc.Processing.Translation.TransitionWidth)
-	slog.Info("Translator Taps Length: %d", len(translatorTaps))
-	translator = dsp.MakeFrequencyTranslator(int(pc.Processing.WorkDecimation), -pc.Processing.BeaconOffset, float32(pc.Source.SampleRate), translatorTaps)
-	agc = dsp.MakeAttackDecayAGC(pc.Processing.AGC.AttackRate, pc.Processing.AGC.DecayRate, pc.Processing.AGC.Reference, pc.Processing.AGC.Gain, pc.Processing.AGC.MaxGain)
-	costas = dsp.MakeCostasLoop2(pc.Processing.CostasLoop.Bandwidth)
-	interp = dsp.MakeFloatInterpolator(int(pc.Processing.WorkDecimation))
+	InitDSP()
 
 	client := rtltcp.MakeClient()
 	err = client.Connect(pc.Source.Address)
@@ -78,11 +69,13 @@ func main() {
 		sampleFifo.Add(data)
 	})
 
-	slog.Info("Output Sample Rate: %f", outSampleRate)
-
 	server = rtltcp.MakeRTLTCPServer(":1234")
 	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) {
 		client.SendCommand(cmd)
+		if cmd.Type == rtltcp.SetFrequency {
+			frequency := binary.BigEndian.Uint32(cmd.Param[:])
+			OnChangeFrequency(frequency)
+		}
 	})
 
 	err = server.Start()

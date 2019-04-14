@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/quan-to/slog"
 	"net"
+	"strings"
 	"sync"
 	"time"
 	"unsafe"
@@ -14,7 +15,7 @@ import (
 
 const defaultReadTimeout = 1000
 
-var log = slog.Scope("RTLTCP")
+var log = slog.Scope("RTLTCP Server")
 
 type OnCommand func(sessionId string, cmd Command)
 type OnConnect func(sessionId string, address string)
@@ -128,10 +129,13 @@ func (server *Server) loop() {
 		// Listen for an incoming connection.
 		conn, err := server.serverListener.Accept()
 		if err != nil {
-			slog.Fatal("Error accepting: ", err.Error())
+			if !strings.Contains(err.Error(), "use of closed") {
+				slog.Fatal("Error accepting: %s", err.Error())
+			}
+		} else {
+			// Handle connections in a new goroutine.
+			go server.handleRequest(conn)
 		}
-		// Handle connections in a new goroutine.
-		go server.handleRequest(conn)
 	}
 	_ = server.serverListener.Close()
 	log.Info("Server finished listening")
@@ -154,7 +158,7 @@ func (server *Server) handleRequest(conn net.Conn) {
 	session := &Session{
 		id:   uid.String(),
 		conn: conn,
-		log:  log.SubScope(conn.RemoteAddr().String()),
+		log:  slog.Scope(conn.RemoteAddr().String()),
 	}
 	clog := session.log
 

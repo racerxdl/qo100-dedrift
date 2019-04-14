@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/quan-to/slog"
 	"net"
+	"strings"
 	"time"
 )
 
 const readTimeout = time.Second * 2
+
+var clog = slog.Scope("RTLTCP Client")
 
 type OnSamples func([]complex64)
 
@@ -92,13 +96,13 @@ func (client *Client) SendCommand(cmd Command) error {
 }
 
 func (client *Client) Connect(address string) error {
-	log.Debug("Connecting to %s", address)
+	clog.Debug("Connecting to %s", address)
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return err
 	}
 	client.conn = conn
-	log.Debug("Waiting for handshake")
+	clog.Debug("Waiting for handshake")
 	err = client.handshake()
 
 	if err != nil {
@@ -106,7 +110,7 @@ func (client *Client) Connect(address string) error {
 		return err
 	}
 
-	log.Debug("Got handshake. Running")
+	clog.Debug("Got handshake. Running")
 	client.running = true
 	go client.loop()
 
@@ -143,7 +147,7 @@ func (client *Client) handshake() error {
 		return err
 	}
 
-	log.Debug("Received Handshake. Tuner Type: %s", TunerTypeToName[client.dongleInfo.TunerType])
+	clog.Debug("Received Handshake. Tuner Type: %s", TunerTypeToName[client.dongleInfo.TunerType])
 
 	return nil
 }
@@ -152,11 +156,19 @@ func (client *Client) loop() {
 	buffer := make([]byte, 512)
 
 	for client.running {
+		chunkSize := 512
+
+		if len(client.samplesBuffer)-client.samplesBufferPos < chunkSize {
+			chunkSize = len(client.samplesBuffer) - client.samplesBufferPos
+		}
+
 		client.conn.SetReadDeadline(time.Now().Add(readTimeout))
-		n, err := client.conn.Read(buffer)
+		n, err := client.conn.Read(buffer[:chunkSize])
 
 		if err != nil {
-			log.Error("Error reading data: %s", err)
+			if !strings.Contains(err.Error(), "use of closed") {
+				clog.Error("Error reading data: %s", err)
+			}
 			client.running = false
 			break
 		}

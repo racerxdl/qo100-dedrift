@@ -26,6 +26,12 @@ github.com/myriadrf/limedrv v0.0.0-20190225221912-8583a26e3fce/go.mod h1:/SXVBJB
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/quan-to/slog v0.0.0-20190317205605-56a2b4159924 h1:LRAAFmYMlaelEo4YLL+YG89di3S2y33E9K1Hb+NLkT4=
 github.com/quan-to/slog v0.0.0-20190317205605-56a2b4159924/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
+github.com/quan-to/slog v0.0.0-20190414164108-56daca9e2285 h1:qkOMEe1cTkHTEOBLXBlxgUMOqXimPHGMORSg/IhLwRo=
+github.com/quan-to/slog v0.0.0-20190414164108-56daca9e2285/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
+github.com/quan-to/slog v0.0.0-20190414171808-19c09f231967 h1:uD8EvNROxXiuC/Cj921xbm3q9E8LaIaw+aoESfY+DcM=
+github.com/quan-to/slog v0.0.0-20190414171808-19c09f231967/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
+github.com/quan-to/slog v0.0.0-20190414172229-8bce0937f2c1 h1:MnA+ZupAvLktxak+UU7zWP2xCsTjQFYDnFd3VhFHN2w=
+github.com/quan-to/slog v0.0.0-20190414172229-8bce0937f2c1/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
 github.com/racerxdl/fastconvert v0.0.0-20190129064530-871b6f6cd82a/go.mod h1:V4kP6uu5nqjDVGhlYMtT/7JG7WJjXnipMGcQ8PFeUqU=
 github.com/racerxdl/go.fifo v0.0.0-20180604061744-c6aa83afe374/go.mod h1:CvYWG6Py4TRzGCUVX2n8+CjE6mrME/+kHkkGmbDA5zw=
 github.com/racerxdl/go.fifo v0.0.0-20190324175329-e4cbb374dbb0 h1:tQ3cU+k9Ik1IdKEvTVxazajiaTJzPY8hLGB50kIg/AQ=
