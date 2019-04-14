@@ -82,7 +82,7 @@ func DSP() {
 		swapAndTrimSlices(&a, &b, l)
 		//
 		if time.Since(lastShiftReport) > time.Second {
-			hzDrift := costas.GetFrequency() * (SampleRate / WorkDecimation) / (math.Pi * 2)
+			hzDrift := costas.GetFrequency() * (float32(pc.Source.SampleRate) / float32(pc.Processing.WorkDecimation)) / (math.Pi * 2)
 			slog.Info("Offset: %f Hz", hzDrift)
 			lastShiftReport = time.Now()
 		}
