@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/quan-to/slog"
+	"github.com/racerxdl/qo100-dedrift/metrics"
 	"net"
 	"strings"
 	"sync"
@@ -13,7 +14,7 @@ import (
 	"unsafe"
 )
 
-const defaultReadTimeout = 1000
+const defaultReadTimeout = time.Second
 
 var log = slog.Scope("RTLTCP Server")
 
@@ -111,7 +112,8 @@ func (server *Server) ComplexBroadcast(data []complex64) {
 func (server *Server) Broadcast(data []byte) {
 	server.connectionLock.Lock()
 	for _, v := range server.connections {
-		_, _ = v.conn.Write(data)
+		n, _ := v.conn.Write(data)
+		metrics.BytesOut.Add(float64(n))
 	}
 	server.connectionLock.Unlock()
 }
@@ -130,7 +132,7 @@ func (server *Server) loop() {
 		conn, err := server.serverListener.Accept()
 		if err != nil {
 			if !strings.Contains(err.Error(), "use of closed") {
-				slog.Fatal("Error accepting: %s", err.Error())
+				log.Fatal("Error accepting: %s", err.Error())
 			}
 		} else {
 			// Handle connections in a new goroutine.
@@ -184,6 +186,9 @@ func (server *Server) handleRequest(conn net.Conn) {
 		server.onConnectCb(session.id, session.conn.RemoteAddr().String())
 	}
 
+	metrics.TotalConnections.Inc()
+	metrics.Connections.Inc()
+
 	for running {
 		_ = conn.SetReadDeadline(time.Now().Add(defaultReadTimeout))
 		n, err := conn.Read(buffer)
@@ -219,8 +224,8 @@ func (server *Server) handleRequest(conn net.Conn) {
 				continue
 			}
 			server.handlePacket(session, cmd)
+			metrics.BytesIn.Add(float64(n))
 		}
-
 	}
 	server.connectionLock.Lock()
 	for i, v := range server.connections {
@@ -232,5 +237,6 @@ func (server *Server) handleRequest(conn net.Conn) {
 	server.connectionLock.Unlock()
 	_ = conn.Close()
 
+	metrics.Connections.Dec()
 	clog.Info("Connection closed.")
 }

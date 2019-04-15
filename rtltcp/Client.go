@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/quan-to/slog"
+	"github.com/racerxdl/qo100-dedrift/metrics"
 	"net"
 	"strings"
 	"time"
@@ -91,7 +92,8 @@ func (client *Client) SendCommand(cmd Command) error {
 		return err
 	}
 
-	_, err = client.conn.Write(buffer.Bytes())
+	n, err := client.conn.Write(buffer.Bytes())
+	metrics.BytesOut.Add(float64(n))
 	return err
 }
 
@@ -141,6 +143,7 @@ func (client *Client) handshake() error {
 		return fmt.Errorf("not received enough bytes for handshake")
 	}
 
+	metrics.BytesIn.Add(float64(n))
 	b := bytes.NewReader(buffer)
 	err = binary.Read(b, binary.BigEndian, &client.dongleInfo)
 	if err != nil {
@@ -183,6 +186,7 @@ func (client *Client) loop() {
 			client.handleData(client.samplesBuffer)
 			client.samplesBufferPos = 0
 		}
+		metrics.BytesIn.Add(float64(n))
 	}
 
 	_ = client.conn.Close()

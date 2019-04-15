@@ -5,7 +5,9 @@ import (
 	"flag"
 	"github.com/quan-to/slog"
 	"github.com/racerxdl/qo100-dedrift/config"
+	"github.com/racerxdl/qo100-dedrift/metrics"
 	"github.com/racerxdl/qo100-dedrift/rtltcp"
+	"github.com/racerxdl/qo100-dedrift/web"
 	"os"
 	"os/signal"
 	"runtime/pprof"
@@ -39,11 +41,11 @@ func main() {
 	}
 
 	if *createDefault {
-		slog.Info("Create Default Config enabled. Saving defaults to %s", ConfigFileName)
+		log.Info("Create Default Config enabled. Saving defaults to %s", ConfigFileName)
 		err = config.SaveConfig(ConfigFileName, config.DefaultConfig)
 
 		if err != nil {
-			slog.Fatal(err)
+			log.Fatal(err)
 		}
 
 		return
@@ -52,7 +54,7 @@ func main() {
 	pc, err = config.LoadConfig(ConfigFileName)
 
 	if err != nil {
-		slog.Fatal("Error loading configuration file at %s: %s", ConfigFileName, err)
+		log.Fatal("Error loading configuration file at %s: %s", ConfigFileName, err)
 	}
 
 	InitDSP()
@@ -60,8 +62,13 @@ func main() {
 	client := rtltcp.MakeClient()
 	err = client.Connect(pc.Source.Address)
 	if err != nil {
-		slog.Fatal(err)
+		log.Fatal(err)
 	}
+
+	defer client.Stop()
+
+	metrics.ServerCenterFrequency.Set(float64(pc.Source.CenterFrequency))
+	metrics.ServerSampleRate.Set(float64(pc.Source.SampleRate))
 
 	client.SetSampleRate(pc.Source.SampleRate)
 	client.SetCenterFrequency(pc.Source.CenterFrequency)
@@ -80,8 +87,19 @@ func main() {
 
 	err = server.Start()
 	if err != nil {
-		slog.Fatal("Error starting RTLTCP: %s", err)
+		log.Fatal("Error starting RTLTCP: %s", err)
 	}
+
+	defer server.Stop()
+
+	ws := web.MakeWebServer(pc.Server.HTTPAddress)
+	err = ws.Start()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer ws.Stop()
 
 	dspRunning = true
 	go DSP()
@@ -99,8 +117,5 @@ func main() {
 			running = false
 		}
 	}
-
-	client.Stop()
-	server.Stop()
 	dspRunning = false
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/quan-to/slog"
 	"github.com/racerxdl/go.fifo"
+	"github.com/racerxdl/qo100-dedrift/metrics"
 	"github.com/racerxdl/segdsp/dsp"
 	"github.com/racerxdl/segdsp/tools"
 	"math"
@@ -53,11 +54,13 @@ func OnChangeFrequency(newFrequency uint32) {
 	pc.Source.CenterFrequency = newFrequency
 	translator.SetFrequency(-pc.Processing.BeaconOffset)
 	log.Debug("New Beacon Offset: %f Hz", pc.Processing.BeaconOffset)
+	metrics.ServerCenterFrequency.Set(float64(newFrequency))
 }
 
 func InitDSP() {
 	outSampleRate := float64(pc.Source.SampleRate) / float64(pc.Processing.WorkDecimation)
 	translatorTaps := dsp.MakeLowPass(pc.Processing.Translation.Gain, float64(pc.Source.SampleRate), (outSampleRate/2)-pc.Processing.Translation.TransitionWidth, pc.Processing.Translation.TransitionWidth)
+	//translatorTaps := dsp.MakeLowPassFixed(pc.Processing.Translation.Gain, float64(pc.Source.SampleRate), outSampleRate/2, 32)
 	slog.Info("Translator Taps Length: %d", len(translatorTaps))
 	translator = dsp.MakeFrequencyTranslator(int(pc.Processing.WorkDecimation), -pc.Processing.BeaconOffset, float32(pc.Source.SampleRate), translatorTaps)
 	agc = dsp.MakeAttackDecayAGC(pc.Processing.AGC.AttackRate, pc.Processing.AGC.DecayRate, pc.Processing.AGC.Reference, pc.Processing.AGC.Gain, pc.Processing.AGC.MaxGain)
@@ -105,8 +108,9 @@ func DSP() {
 		swapAndTrimSlices(&a, &b, l)
 
 		if time.Since(lastShiftReport) > time.Second {
-			//hzDrift := costas.GetFrequency() * (float32(pc.Source.SampleRate) / float32(pc.Processing.WorkDecimation)) / (math.Pi * 2)
+			hzDrift := costas.GetFrequency() * (float32(pc.Source.SampleRate) / float32(pc.Processing.WorkDecimation)) / (math.Pi * 2)
 			//slog.Info("Offset: %f Hz", hzDrift)
+			metrics.LockOffset.Set(float64(hzDrift))
 			lastShiftReport = time.Now()
 		}
 
