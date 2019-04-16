@@ -75,13 +75,18 @@ func main() {
 	client.SetOnSamples(func(data []complex64) {
 		sampleFifo.Add(data)
 	})
+	client.SetGain(pc.Source.Gain)
 
 	server = rtltcp.MakeRTLTCPServer(":1234")
 	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) {
-		client.SendCommand(cmd)
-		if cmd.Type == rtltcp.SetFrequency {
-			frequency := binary.BigEndian.Uint32(cmd.Param[:])
-			OnChangeFrequency(frequency)
+		if pc.Server.AllowControl {
+			client.SendCommand(cmd)
+			if cmd.Type == rtltcp.SetFrequency {
+				frequency := binary.BigEndian.Uint32(cmd.Param[:])
+				OnChangeFrequency(frequency)
+			}
+		} else {
+			log.Warn("Ignoring command %s because AllowControl is false", rtltcp.CommandTypeToName[cmd.Type])
 		}
 	})
 

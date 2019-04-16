@@ -4,6 +4,7 @@ type SourceConfig struct {
 	Address         string
 	SampleRate      uint32
 	CenterFrequency uint32
+	Gain            uint8
 }
 
 type ServerConfig struct {

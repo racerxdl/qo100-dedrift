@@ -6,6 +6,7 @@ const (
 	DefaultCenterFrequency = 740000000
 	DefaultBeaconOffset    = 143e3
 	DefaultWorkDecimation  = 32
+	DefaultGain            = 20
 )
 
 const (
@@ -36,6 +37,7 @@ var DefaultConfig = ProgramConfig{
 		Address:         DefaultSourceAddress,
 		SampleRate:      DefaultSampleRate,
 		CenterFrequency: DefaultCenterFrequency,
+		Gain:            DefaultGain,
 	},
 	Server: ServerConfig{
 		RTLTCPAddress: DefaultRTLTCPAddress,

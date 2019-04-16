@@ -29,6 +29,7 @@ var dspRunning bool
 var lastShiftReport = time.Now()
 var phase = float32(0)
 var beaconAbsoluteFrequency = uint32(0)
+var dcblock *dsp.DCFilter
 
 func checkAndResizeBuffers(length int) {
 	if len(buffer0) < length {
@@ -67,6 +68,7 @@ func InitDSP() {
 	costas = dsp.MakeCostasLoop2(pc.Processing.CostasLoop.Bandwidth)
 	interp = dsp.MakeFloatInterpolator(int(pc.Processing.WorkDecimation))
 	slog.Info("Output Sample Rate: %f", outSampleRate)
+	dcblock = dsp.MakeDCFilter()
 }
 
 func DSP() {
@@ -88,6 +90,7 @@ func DSP() {
 		}
 
 		originalData := sampleFifo.Next().([]complex64)
+		dcblock.WorkInline(originalData)
 
 		checkAndResizeBuffers(len(originalData))
 
