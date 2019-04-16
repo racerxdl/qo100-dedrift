@@ -15,6 +15,7 @@ import (
 )
 
 const defaultReadTimeout = time.Second
+const chunkLength = 1428
 
 var log = slog.Scope("RTLTCP Server")
 
@@ -111,9 +112,19 @@ func (server *Server) ComplexBroadcast(data []complex64) {
 
 func (server *Server) Broadcast(data []byte) {
 	server.connectionLock.Lock()
-	for _, v := range server.connections {
-		n, _ := v.conn.Write(data)
-		metrics.BytesOut.Add(float64(n))
+	chunks := len(data) / chunkLength
+	for i := 0; i < chunks; i++ {
+		s := i * chunkLength
+		e := (i + 1) * chunkLength
+		if e > len(data) {
+			e = len(data)
+		}
+		payload := data[s:e]
+
+		for _, v := range server.connections {
+			n, _ := v.conn.Write(payload)
+			metrics.BytesOut.Add(float64(n))
+		}
 	}
 	server.connectionLock.Unlock()
 }

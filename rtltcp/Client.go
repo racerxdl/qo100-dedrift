@@ -49,9 +49,9 @@ func (client *Client) SetOnSamples(cb OnSamples) {
 	client.cb = cb
 }
 
-func (client *Client) SetGain(gain uint8) error {
+func (client *Client) SetGain(gain uint32) error {
 	buff := make([]byte, 4)
-	binary.BigEndian.PutUint32(buff, uint32(gain))
+	binary.BigEndian.PutUint32(buff, gain)
 
 	cmd := Command{
 		Type:  SetGain,

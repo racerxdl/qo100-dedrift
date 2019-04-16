@@ -1,15 +1,16 @@
 [Source]
   Address = "127.0.0.1:1235"
   SampleRate = 1800000
-  CenterFrequency = 740000000
+  CenterFrequency = 739800000
+  Gain = 27.0
 
 [Server]
   RTLTCPAddress = ":1234"
-  HTTPAddress = ":8080"
-  AllowControl = true
+  HTTPAddress = ":8000"
+  AllowControl = false
 
 [Processing]
-  BeaconOffset = 143000.0
+  BeaconOffset = 132000.0
   WorkDecimation = 32
   [Processing.AGC]
     AttackRate = 0.01

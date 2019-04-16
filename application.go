@@ -75,9 +75,10 @@ func main() {
 	client.SetOnSamples(func(data []complex64) {
 		sampleFifo.Add(data)
 	})
-	client.SetGain(pc.Source.Gain)
+	client.SetGain(uint32(pc.Source.Gain * 10))
 
 	server = rtltcp.MakeRTLTCPServer(":1234")
+	server.SetDongleInfo(client.GetDongleInfo())
 	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) {
 		if pc.Server.AllowControl {
 			client.SendCommand(cmd)

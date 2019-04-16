@@ -124,7 +124,7 @@ func DSP() {
 			c := tools.PhaseToComplex(phase)
 			originalData[i] *= c
 			phase -= v
-			if phase > TwoPi || phase < MinusTwoPi {
+			if phase > TwoPi || phase < MinusTwoPi { // Wrap phase between - 2 * pi and + 2 * pi
 				phase = phase*OneOverTwoPi - float32(int(phase*OneOverTwoPi))
 				phase = phase * TwoPi
 			}
