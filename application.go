@@ -107,6 +107,11 @@ func main() {
 
 	defer ws.Stop()
 
+	SetOnFFT(func(segFFT, fullFFT []float32) {
+		ws.BroadcastFFT(web.MessageTypeMainFFT, fullFFT)
+		ws.BroadcastFFT(web.MessageTypeSegFFT, segFFT)
+	})
+
 	dspRunning = true
 	go DSP()
 

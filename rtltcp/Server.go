@@ -44,7 +44,7 @@ func MakeRTLTCPServer(address string) *Server {
 		dongleInfo: &DongleInfo{
 			Magic:          [4]uint8{'R', 'T', 'L', '0'},
 			TunerType:      RtlsdrTunerR820t,
-			TunerGainCount: 4,
+			TunerGainCount: 0,
 		},
 	}
 }
