@@ -82,6 +82,9 @@ func InitDSP() {
 	slog.Info("Output Sample Rate: %f", outSampleRate)
 	dcblock = dsp.MakeDCFilter()
 	fftWindow = dsp.HammingWindow(fftSize)
+
+	metrics.SegmentSampleRate.Set(float64(outSampleRate))
+	metrics.SegmentCenterFrequency.Set(float64(beaconAbsoluteFrequency))
 }
 
 func ComputeFFT(sampleRate float32, samples []complex64, lastFFT []float32) []float32 {
@@ -173,6 +176,7 @@ func DSP() {
 			hzDrift := costas.GetFrequency() * (float32(pc.Source.SampleRate) / float32(pc.Processing.WorkDecimation)) / (math.Pi * 2)
 			//slog.Info("Offset: %f Hz", hzDrift)
 			metrics.LockOffset.Set(float64(hzDrift))
+			metrics.SegmentCenterFrequency.Set(float64(beaconAbsoluteFrequency) + float64(hzDrift))
 			lastShiftReport = time.Now()
 		}
 

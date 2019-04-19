@@ -67,6 +67,8 @@ func main() {
 
 	defer client.Stop()
 
+	metrics.MaxWebConnections.Add(float64(pc.Server.MaxWebConnections))
+	metrics.MaxConnections.Add(float64(pc.Server.MaxRTLConnections))
 	metrics.ServerCenterFrequency.Set(float64(pc.Source.CenterFrequency))
 	metrics.ServerSampleRate.Set(float64(pc.Source.SampleRate))
 
@@ -98,7 +100,7 @@ func main() {
 
 	defer server.Stop()
 
-	ws := web.MakeWebServer(pc.Server.HTTPAddress)
+	ws := web.MakeWebServer(pc.Server.HTTPAddress, pc.Server.MaxWebConnections, pc.Server.WebSettings)
 	err = ws.Start()
 
 	if err != nil {

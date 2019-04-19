@@ -1,16 +1,30 @@
 [Source]
   Address = "127.0.0.1:1235"
   SampleRate = 1800000
-  CenterFrequency = 739800000
-  Gain = 27.0
+  CenterFrequency = 740000000
+  Gain = 20.0
 
 [Server]
   RTLTCPAddress = ":1234"
-  HTTPAddress = ":8000"
-  AllowControl = false
+  HTTPAddress = ":8080"
+  MaxWebConnections = 100
+  MaxRTLConnections = 5
+  AllowControl = true
+  [Server.WebSettings]
+    Name = "PU2NVX Server"
+    [Server.WebSettings.SegFFT]
+      MaxVal = -70
+      Range = 40
+      Width = 512
+      Height = 256
+    [Server.WebSettings.FullFFT]
+      MaxVal = -70
+      Range = 40
+      Width = 512
+      Height = 256
 
 [Processing]
-  BeaconOffset = 132000.0
+  BeaconOffset = 143000.0
   WorkDecimation = 32
   [Processing.AGC]
     AttackRate = 0.01

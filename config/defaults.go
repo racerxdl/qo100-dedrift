@@ -10,9 +10,18 @@ const (
 )
 
 const (
-	DefaultRTLTCPAddress = ":1234"
-	DefaultHTTPAddress   = ":8080"
-	DefaultAllowControl  = true
+	DefaultRTLTCPAddress     = ":1234"
+	DefaultHTTPAddress       = ":8080"
+	DefaultAllowControl      = true
+	DefaultMaxWebConnections = 100
+	DefaultMaxRTLConnections = 5
+)
+
+const (
+	DefaultFFTWindowMaxVal = -70
+	DefaultFFTWindowRange  = 40
+	DefaultFFTWindowWidth  = 512
+	DefaultFFTWindowHeight = 256
 )
 
 const (
@@ -40,9 +49,26 @@ var DefaultConfig = ProgramConfig{
 		Gain:            DefaultGain,
 	},
 	Server: ServerConfig{
-		RTLTCPAddress: DefaultRTLTCPAddress,
-		HTTPAddress:   DefaultHTTPAddress,
-		AllowControl:  DefaultAllowControl,
+		RTLTCPAddress:     DefaultRTLTCPAddress,
+		HTTPAddress:       DefaultHTTPAddress,
+		AllowControl:      DefaultAllowControl,
+		MaxWebConnections: DefaultMaxWebConnections,
+		MaxRTLConnections: DefaultMaxRTLConnections,
+		WebSettings: WebSettings{
+			Name: "PU2NVX Server",
+			SegFFT: FFTWindowSetting{
+				MaxVal: DefaultFFTWindowMaxVal,
+				Range:  DefaultFFTWindowRange,
+				Width:  DefaultFFTWindowWidth,
+				Height: DefaultFFTWindowHeight,
+			},
+			FullFFT: FFTWindowSetting{
+				MaxVal: DefaultFFTWindowMaxVal,
+				Range:  DefaultFFTWindowRange,
+				Width:  DefaultFFTWindowWidth,
+				Height: DefaultFFTWindowHeight,
+			},
+		},
 	},
 	Processing: ProcessingConfig{
 		BeaconOffset:   DefaultBeaconOffset,

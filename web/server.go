@@ -3,13 +3,17 @@ package web
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/quan-to/slog"
+	"github.com/racerxdl/qo100-dedrift/config"
 	"github.com/racerxdl/qo100-dedrift/metrics"
+	"mime"
 	"net"
 	"net/http"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -20,25 +24,36 @@ const (
 	MessageTypeSegFFT        = iota
 )
 
+const (
+	ClientTimeout = time.Second * 5
+	pongWait      = 60 * time.Second
+	writeWait     = 2 * time.Second
+)
+
 var log = slog.Scope("Server")
 
 type wsClient struct {
-	connection *websocket.Conn
-	closeChan  chan bool
+	sync.Mutex
+	connection    *websocket.Conn
+	closeChan     chan bool
+	lastKeepAlive time.Time
 }
 
 type Server struct {
 	address string
 
-	running  bool
-	stopChan chan bool
-	listener net.Listener
-	upgrader websocket.Upgrader
-	clients  []*wsClient
-	cLock    sync.Mutex
+	running      bool
+	stopChan     chan bool
+	listener     net.Listener
+	upgrader     websocket.Upgrader
+	clients      []*wsClient
+	cLock        sync.Mutex
+	maxWsClients int
+	settings     []byte
 }
 
-func MakeWebServer(address string) *Server {
+func MakeWebServer(address string, maxWsClients int, settings config.WebSettings) *Server {
+	s, _ := json.MarshalIndent(settings, "", "   ")
 	return &Server{
 		address:  address,
 		running:  false,
@@ -48,8 +63,10 @@ func MakeWebServer(address string) *Server {
 				return true
 			},
 		},
-		clients: make([]*wsClient, 0),
-		cLock:   sync.Mutex{},
+		clients:      make([]*wsClient, 0),
+		cLock:        sync.Mutex{},
+		maxWsClients: maxWsClients,
+		settings:     s,
 	}
 }
 
@@ -74,7 +91,21 @@ func (ws *Server) removeClient(c *wsClient) {
 	ws.cLock.Unlock()
 }
 
+func (ws *Server) maxClients() bool {
+	ws.cLock.Lock()
+	clientCount := len(ws.clients)
+	ws.cLock.Unlock()
+
+	return clientCount >= ws.maxWsClients
+}
+
 func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
+	if ws.maxClients() {
+		w.WriteHeader(503)
+		_, _ = w.Write([]byte("Max connections reached"))
+		return
+	}
+
 	c, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Error upgrading: %s", err)
@@ -82,8 +113,9 @@ func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &wsClient{
-		connection: c,
-		closeChan:  make(chan bool, 1),
+		connection:    c,
+		closeChan:     make(chan bool, 1),
+		lastKeepAlive: time.Now(),
 	}
 
 	ws.putClient(client)
@@ -91,18 +123,45 @@ func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
 	running := true
 	ticker := time.NewTicker(time.Second)
 
+	metrics.WebConnections.Inc()
+
+	c.SetReadDeadline(time.Now().Add(pongWait))
+	c.SetPongHandler(func(string) error { c.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
+	go func() {
+		for running {
+			_, data, err := c.ReadMessage()
+			if err == nil {
+				if len(data) > 0 {
+					if string(data) == "KEEP" {
+						client.lastKeepAlive = time.Now()
+					}
+				}
+			} else {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					log.Error(err)
+				}
+				running = false
+			}
+		}
+	}()
+
 	for running {
 		select {
 		case <-client.closeChan:
 			running = false
 		case <-ticker.C:
-			c.SetWriteDeadline(time.Now().Add(time.Second))
+			client.Lock()
+			if time.Since(client.lastKeepAlive) > ClientTimeout {
+				log.Warn("Client %s timeout.", c.RemoteAddr())
+				running = false
+			}
+			c.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Error("Error sending ping: %s", err)
 				running = false
 			}
-		default:
-
+			client.Unlock()
 		}
 	}
 	log.Info("Websocket Client %s disconnected", c.RemoteAddr())
@@ -115,6 +174,7 @@ func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
 
 	// Close
 	c.Close()
+	metrics.WebConnections.Dec()
 }
 
 func (ws *Server) BroadcastFFT(fftType uint8, fft []float32) {
@@ -134,9 +194,13 @@ func (ws *Server) BroadcastFFT(fftType uint8, fft []float32) {
 	}
 
 	for _, v := range ws.clients {
+		v.Lock()
 		err := v.connection.WritePreparedMessage(msg)
+		v.Unlock()
 		if err != nil {
-			log.Error(err)
+			if !strings.Contains(err.Error(), "close sent") {
+				log.Error(err)
+			}
 			v.closeChan <- true
 		}
 	}
@@ -178,8 +242,55 @@ func (ws *Server) loop() {
 	router := mux.NewRouter()
 	srv.Handler = router
 
+	files := AssetNames()
+
+	for _, f := range files {
+		urlPath := path.Join("/", f)
+		log.Debug("Registering file %s", urlPath)
+		router.HandleFunc(urlPath, func(w http.ResponseWriter, r *http.Request) {
+
+			data, err := Asset(urlPath[1:])
+			if err != nil {
+				w.WriteHeader(500)
+				_, _ = w.Write([]byte("Internal Server Error"))
+				return
+			}
+
+			ext := path.Ext(urlPath)
+			mimeType := mime.TypeByExtension(ext)
+
+			if mimeType == "" {
+				mimeType = mime.TypeByExtension(".bin")
+			}
+
+			w.Header().Add("content-type", mimeType)
+			w.WriteHeader(200)
+			_, _ = w.Write(data)
+		})
+	}
+
 	router.Handle("/metrics", metrics.GetHandler())
 	router.HandleFunc("/ws", ws.websocket)
+	router.HandleFunc("/settings.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "text/json")
+		w.WriteHeader(200)
+		_, _ = w.Write(ws.settings)
+	})
+
+	indexHandler := func(w http.ResponseWriter, r *http.Request) {
+		data, err := Asset("index.html")
+		if err != nil {
+			w.WriteHeader(500)
+			_, _ = w.Write([]byte("Internal Server Error"))
+			return
+		}
+
+		w.WriteHeader(200)
+		_, _ = w.Write(data)
+	}
+
+	router.HandleFunc("/", indexHandler)
+	router.NotFoundHandler = http.HandlerFunc(indexHandler)
 
 	err := srv.Serve(ws.listener)
 	if err != nil && !strings.Contains(err.Error(), "use of closed") {

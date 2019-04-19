@@ -16,6 +16,11 @@ func init() {
 	registry.MustRegister(LockOffset)
 	registry.MustRegister(ServerCenterFrequency)
 	registry.MustRegister(ServerSampleRate)
+	registry.MustRegister(SegmentCenterFrequency)
+	registry.MustRegister(SegmentSampleRate)
+	registry.MustRegister(WebConnections)
+	registry.MustRegister(MaxConnections)
+	registry.MustRegister(MaxWebConnections)
 }
 
 var (
@@ -26,6 +31,10 @@ var (
 	TotalConnections = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "total_connections",
 		Help: "The total number of connections since server started",
+	})
+	MaxConnections = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "max_connections",
+		Help: "The max concurrent connections this server accepts",
 	})
 	BytesOut = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "bytes_out",
@@ -40,12 +49,33 @@ var (
 		Help: "Offset Frequency in Hertz of the current beacon lock",
 	})
 	ServerCenterFrequency = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "server_center_frequency",
-		Help: "Server Center Frequency in Hertz",
+		Subsystem: "server",
+		Name:      "center_frequency",
+		Help:      "Server Center Frequency in Hertz",
 	})
 	ServerSampleRate = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "server_samplerate",
-		Help: "Server Sample Rate in Samples Per Second",
+		Subsystem: "server",
+		Name:      "samplerate",
+		Help:      "Server Sample Rate in Samples Per Second",
+	})
+	SegmentCenterFrequency = prometheus.NewGauge(prometheus.GaugeOpts{
+		Subsystem: "segment",
+		Name:      "center_frequency",
+		Help:      "Beacon Segment Center Frequency in Hertz",
+	})
+	SegmentSampleRate = prometheus.NewGauge(prometheus.GaugeOpts{
+		Subsystem: "segment",
+		Name:      "samplerate",
+		Help:      "Beacon Segment Rate in Samples Per Second",
+	})
+	WebConnections = prometheus.NewGauge(prometheus.GaugeOpts{
+		Subsystem: "server",
+		Name:      "webconnections",
+		Help:      "Current WebSocket Connections",
+	})
+	MaxWebConnections = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "max_web_connections",
+		Help: "The max concurrent connections to websocket this server accepts",
 	})
 )
 

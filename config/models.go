@@ -8,9 +8,12 @@ type SourceConfig struct {
 }
 
 type ServerConfig struct {
-	RTLTCPAddress string
-	HTTPAddress   string
-	AllowControl  bool
+	RTLTCPAddress     string
+	HTTPAddress       string
+	MaxWebConnections int
+	MaxRTLConnections int
+	AllowControl      bool
+	WebSettings       WebSettings
 }
 
 type AGCConfig struct {
@@ -42,4 +45,17 @@ type ProgramConfig struct {
 	Source     SourceConfig
 	Server     ServerConfig
 	Processing ProcessingConfig
+}
+
+type FFTWindowSetting struct {
+	MaxVal int `json:"maxVal"`
+	Range  int `json:"range"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+type WebSettings struct {
+	Name    string           `json:"name"`
+	SegFFT  FFTWindowSetting `json:"segFFT"`
+	FullFFT FFTWindowSetting `json:"fullFFT"`
 }
