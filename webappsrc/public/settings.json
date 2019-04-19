@@ -1,0 +1,15 @@
+{
+  "name": "PU2NVX Test Server",
+  "segFFT": {
+    "maxVal": -70,
+    "range": 40,
+    "width": 512,
+    "height": 256
+  },
+  "fullFFT": {
+    "maxVal": -70,
+    "range": 40,
+    "width": 512,
+    "height": 256
+  }
+}
