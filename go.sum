@@ -40,12 +40,7 @@ github.com/prometheus/common v0.0.0-20181126121408-4724e9255275 h1:PnBWHBf+6L0jO
 github.com/prometheus/common v0.0.0-20181126121408-4724e9255275/go.mod h1:daVV7qP5qjZbuso7PdcryaAu0sAZbrN9i7WWcTMWvro=
 github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a h1:9a8MnZMP0X2nLJdBg+pBmGgkJlSaKC2KaQmTCk1XDtE=
 github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
-github.com/quan-to/slog v0.0.0-20190317205605-56a2b4159924 h1:LRAAFmYMlaelEo4YLL+YG89di3S2y33E9K1Hb+NLkT4=
 github.com/quan-to/slog v0.0.0-20190317205605-56a2b4159924/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
-github.com/quan-to/slog v0.0.0-20190414164108-56daca9e2285 h1:qkOMEe1cTkHTEOBLXBlxgUMOqXimPHGMORSg/IhLwRo=
-github.com/quan-to/slog v0.0.0-20190414164108-56daca9e2285/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
-github.com/quan-to/slog v0.0.0-20190414171808-19c09f231967 h1:uD8EvNROxXiuC/Cj921xbm3q9E8LaIaw+aoESfY+DcM=
-github.com/quan-to/slog v0.0.0-20190414171808-19c09f231967/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
 github.com/quan-to/slog v0.0.0-20190414172229-8bce0937f2c1 h1:MnA+ZupAvLktxak+UU7zWP2xCsTjQFYDnFd3VhFHN2w=
 github.com/quan-to/slog v0.0.0-20190414172229-8bce0937f2c1/go.mod h1:xc9X6JvWjqAAIox9u4uuolisjwl/GbfkktH6f+nOgqU=
 github.com/racerxdl/fastconvert v0.0.0-20190129064530-871b6f6cd82a/go.mod h1:V4kP6uu5nqjDVGhlYMtT/7JG7WJjXnipMGcQ8PFeUqU=
@@ -53,7 +48,6 @@ github.com/racerxdl/go.fifo v0.0.0-20180604061744-c6aa83afe374/go.mod h1:CvYWG6P
 github.com/racerxdl/go.fifo v0.0.0-20190324175329-e4cbb374dbb0 h1:tQ3cU+k9Ik1IdKEvTVxazajiaTJzPY8hLGB50kIg/AQ=
 github.com/racerxdl/go.fifo v0.0.0-20190324175329-e4cbb374dbb0/go.mod h1:CvYWG6Py4TRzGCUVX2n8+CjE6mrME/+kHkkGmbDA5zw=
 github.com/racerxdl/radioserver v0.0.0-20190316070955-f8953f368ce1/go.mod h1:cSQupBUlkn/QhajTmf6QMErp3PbTVT5Xdd5DSiE0hAI=
-github.com/racerxdl/radioserver v0.0.0-20190324175745-bd3bd7179419 h1:azjcZHqZlV0nbvuDucmu4bZiPPbdHuH4e9HvaWP+uXo=
 github.com/racerxdl/radioserver v0.0.0-20190324175745-bd3bd7179419/go.mod h1:N4ejKokz1jnGfAd3KNgO8E6YMCMP4ZgaHXBEdHBQrP8=
 github.com/racerxdl/segdsp v0.0.0-20190321214158-1cd3e325e91a/go.mod h1:nQDTqJjqr+YsSQw+CVY58Xag4KVqfoi6TgkSXMHlUO4=
 github.com/racerxdl/segdsp v0.0.0-20190413213320-dfaea7c39d3a h1:2QJXxaBOGMsjoZ++ecsek0SE/V4bbraCITBNVji4+4M=
