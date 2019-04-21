@@ -165,7 +165,7 @@ func (client *Client) loop() {
 			chunkSize = len(client.samplesBuffer) - client.samplesBufferPos
 		}
 
-		client.conn.SetReadDeadline(time.Now().Add(readTimeout))
+		_ = client.conn.SetReadDeadline(time.Now().Add(readTimeout))
 		n, err := client.conn.Read(buffer[:chunkSize])
 
 		if err != nil {

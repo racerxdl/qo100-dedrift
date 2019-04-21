@@ -4,22 +4,21 @@ type CommandType uint8
 
 const (
 	SetFrequency           CommandType = 0x01
-	SetSampleRate                      = 0x02
-	SetGainMode                        = 0x03
-	SetGain                            = 0x04
-	SetFrequencyCorrection             = 0x05
-	SetIfStage                         = 0x06
-	SetTestMode                        = 0x07
-	SetAgcMode                         = 0x08
-	SetDirectSampling                  = 0x09
-	SetOffsetTuning                    = 0x0A
-	SetRtlCrystal                      = 0x0B
-	SetTunerCrystal                    = 0x0C
-	SetTunerGainByIndex                = 0x0D
-	SetTunerBandwidth                  = 0x0E
-	SetBiasTee                         = 0x0F
-
-	Invalid = 0xFF
+	SetSampleRate          CommandType = 0x02
+	SetGainMode            CommandType = 0x03
+	SetGain                CommandType = 0x04
+	SetFrequencyCorrection CommandType = 0x05
+	SetIfStage             CommandType = 0x06
+	SetTestMode            CommandType = 0x07
+	SetAgcMode             CommandType = 0x08
+	SetDirectSampling      CommandType = 0x09
+	SetOffsetTuning        CommandType = 0x0A
+	SetRtlCrystal          CommandType = 0x0B
+	SetTunerCrystal        CommandType = 0x0C
+	SetTunerGainByIndex    CommandType = 0x0D
+	SetTunerBandwidth      CommandType = 0x0E
+	SetBiasTee             CommandType = 0x0F
+	Invalid                CommandType = 0xFF
 )
 
 var CommandTypeToName = map[CommandType]string{

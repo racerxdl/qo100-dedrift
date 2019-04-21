@@ -125,8 +125,8 @@ func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
 
 	metrics.WebConnections.Inc()
 
-	c.SetReadDeadline(time.Now().Add(pongWait))
-	c.SetPongHandler(func(string) error { c.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	_ = c.SetReadDeadline(time.Now().Add(pongWait))
+	c.SetPongHandler(func(string) error { _ = c.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	go func() {
 		for running {
@@ -156,7 +156,7 @@ func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
 				log.Warn("Client %s timeout.", c.RemoteAddr())
 				running = false
 			}
-			c.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Error("Error sending ping: %s", err)
 				running = false
@@ -169,7 +169,7 @@ func (ws *Server) websocket(w http.ResponseWriter, r *http.Request) {
 	ws.removeClient(client)
 
 	// Send Close
-	c.SetWriteDeadline(time.Now().Add(time.Second))
+	_ = c.SetWriteDeadline(time.Now().Add(time.Second))
 	_ = c.WriteMessage(websocket.CloseNormalClosure, nil)
 
 	// Close

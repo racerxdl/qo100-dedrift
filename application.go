@@ -72,18 +72,18 @@ func main() {
 	metrics.ServerCenterFrequency.Set(float64(pc.Source.CenterFrequency))
 	metrics.ServerSampleRate.Set(float64(pc.Source.SampleRate))
 
-	client.SetSampleRate(pc.Source.SampleRate)
-	client.SetCenterFrequency(pc.Source.CenterFrequency)
+	_ = client.SetSampleRate(pc.Source.SampleRate)
+	_ = client.SetCenterFrequency(pc.Source.CenterFrequency)
 	client.SetOnSamples(func(data []complex64) {
 		sampleFifo.Add(data)
 	})
-	client.SetGain(uint32(pc.Source.Gain * 10))
+	_ = client.SetGain(uint32(pc.Source.Gain * 10))
 
 	server = rtltcp.MakeRTLTCPServer(":1234")
 	server.SetDongleInfo(client.GetDongleInfo())
 	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) {
 		if pc.Server.AllowControl {
-			client.SendCommand(cmd)
+			_ = client.SendCommand(cmd)
 			if cmd.Type == rtltcp.SetFrequency {
 				frequency := binary.BigEndian.Uint32(cmd.Param[:])
 				OnChangeFrequency(frequency)
@@ -117,18 +117,19 @@ func main() {
 	dspRunning = true
 	go DSP()
 
-	var sig chan os.Signal
-	sig = make(chan os.Signal, 1)
+	var sig = make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
-	running := true
+	//running := true
 
-	for running {
-		select {
-		case <-sig:
-			log.Info("Received SIGINT")
-			running = false
-		}
-	}
+	<-sig
+
+	//for running {
+	//	//select {
+	//	case <-sig:
+	//		log.Info("Received SIGINT")
+	//		running = false
+	//	//}
+	//}
 	dspRunning = false
 }
