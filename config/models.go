@@ -55,7 +55,8 @@ type FFTWindowSetting struct {
 }
 
 type WebSettings struct {
-	Name    string           `json:"name"`
-	SegFFT  FFTWindowSetting `json:"segFFT"`
-	FullFFT FFTWindowSetting `json:"fullFFT"`
+	Name           string           `json:"name"`
+	HighQualityFFT bool             `json:"-"`
+	SegFFT         FFTWindowSetting `json:"segFFT"`
+	FullFFT        FFTWindowSetting `json:"fullFFT"`
 }

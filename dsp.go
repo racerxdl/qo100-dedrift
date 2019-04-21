@@ -5,7 +5,6 @@ import (
 	"github.com/racerxdl/go.fifo"
 	"github.com/racerxdl/qo100-dedrift/metrics"
 	"github.com/racerxdl/segdsp/dsp"
-	"github.com/racerxdl/segdsp/dsp/fft"
 	"github.com/racerxdl/segdsp/tools"
 	"math"
 	"time"
@@ -15,7 +14,6 @@ const (
 	TwoPi        = float32(math.Pi * 2)
 	MinusTwoPi   = -TwoPi
 	OneOverTwoPi = float32(1 / (2 * math.Pi))
-	FFTFPS       = 15
 )
 
 var buffer0 []complex64
@@ -32,16 +30,8 @@ var lastShiftReport = time.Now()
 var phase = float32(0)
 var beaconAbsoluteFrequency = uint32(0)
 var dcblock *dsp.DCFilter
-var lastFFT = time.Now()
-var onFFT func(segFFT, fullFFT []float32)
-var fftWindow []float64
 
-var lastFullFFT = make([]float32, fftSize)
-var lastSegFFT = make([]float32, fftSize)
-
-const fftInterval = time.Second / FFTFPS
-const fftSize = 1024
-const FFTAveraging = 2
+var fftN = []int{1024, 2048, 4096, 8192, 16384}
 
 func checkAndResizeBuffers(length int) {
 	if len(buffer0) < length {
@@ -85,49 +75,6 @@ func InitDSP() {
 
 	metrics.SegmentSampleRate.Set(float64(outSampleRate))
 	metrics.SegmentCenterFrequency.Set(float64(beaconAbsoluteFrequency))
-}
-
-func ComputeFFT(sampleRate float32, samples []complex64, lastFFT []float32) []float32 {
-	samples = samples[:fftSize]
-
-	// Apply window to samples
-	for j := 0; j < len(samples); j++ {
-		var s = samples[j]
-		var r = real(s) * float32(fftWindow[j])
-		var i = imag(s) * float32(fftWindow[j])
-		samples[j] = complex(r, i)
-	}
-
-	fftCData := fft.FFT(samples)
-
-	var fftSamples = make([]float32, len(fftCData))
-	var l = len(fftSamples)
-	var lastV = float32(0)
-	for i, v := range fftCData {
-		var oI = (i + l/2) % l
-		var m = float64(tools.ComplexAbsSquared(v) * (1.0 / sampleRate))
-
-		m = 10 * math.Log10(m)
-
-		fftSamples[oI] = (lastFFT[i]*(FFTAveraging-1) + float32(m)) / FFTAveraging
-		if fftSamples[i] != fftSamples[i] { // IsNaN
-			fftSamples[i] = 0
-		}
-
-		if i > 0 {
-			fftSamples[oI] = lastV*0.4 + fftSamples[oI]*0.6
-		}
-
-		lastV = fftSamples[oI]
-	}
-
-	copy(lastFFT, fftSamples)
-
-	return fftSamples
-}
-
-func SetOnFFT(cb func(segFFT, fullFFT []float32)) {
-	onFFT = cb
 }
 
 func DSP() {
@@ -193,15 +140,23 @@ func DSP() {
 			}
 		}
 
+		server.ComplexBroadcast(originalData)
+
 		if time.Since(lastFFT) > fftInterval && onFFT != nil {
-			segFFT := ComputeFFT(sampleRate, a, lastSegFFT)
-			fullFFT := ComputeFFT(segSampleRate, originalData, lastFullFFT)
+			var segFFT []float32
+			var fullFFT []float32
+
+			if pc.Server.WebSettings.HighQualityFFT {
+				segFFT = ComputeHQFFT(segSampleRate, a, lastSegFFT)
+				fullFFT = ComputeHQFFT(sampleRate, originalData, lastFullFFT)
+			} else {
+				segFFT = ComputeFFT(segSampleRate, a, lastSegFFT)
+				fullFFT = ComputeFFT(sampleRate, originalData, lastFullFFT)
+			}
 
 			onFFT(segFFT, fullFFT)
 
 			lastFFT = time.Now()
 		}
-
-		server.ComplexBroadcast(originalData)
 	}
 }

@@ -25,7 +25,7 @@ const (
 )
 
 const (
-	ClientTimeout = time.Second * 5
+	ClientTimeout = 5 * time.Second
 	pongWait      = 60 * time.Second
 	writeWait     = 2 * time.Second
 )

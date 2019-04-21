@@ -22,6 +22,7 @@ const (
 	DefaultFFTWindowRange  = 40
 	DefaultFFTWindowWidth  = 512
 	DefaultFFTWindowHeight = 256
+	DefaultFFTHighQuality  = true
 )
 
 const (
@@ -55,7 +56,8 @@ var DefaultConfig = ProgramConfig{
 		MaxWebConnections: DefaultMaxWebConnections,
 		MaxRTLConnections: DefaultMaxRTLConnections,
 		WebSettings: WebSettings{
-			Name: "PU2NVX Server",
+			Name:           "PU2NVX Server",
+			HighQualityFFT: DefaultFFTHighQuality,
 			SegFFT: FFTWindowSetting{
 				MaxVal: DefaultFFTWindowMaxVal,
 				Range:  DefaultFFTWindowRange,

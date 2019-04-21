@@ -12,6 +12,7 @@
   AllowControl = true
   [Server.WebSettings]
     Name = "PU2NVX Server"
+    HighQualityFFT = true
     [Server.WebSettings.SegFFT]
       MaxVal = -70
       Range = 40
