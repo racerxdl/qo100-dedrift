@@ -14,7 +14,8 @@ import {SettingsState} from "./actions/types";
 
 const store = createStore(appReducers);
 
-const client = new Client('localhost:8000');
+// const client = new Client('localhost:8000');
+const client = new Client();
 
 client.setOnFullFFT((samples: number[]) => {
   store.dispatch(AddFullFFT(client.getServerCenterFrequency(), client.getServerSampleRate(), samples));
