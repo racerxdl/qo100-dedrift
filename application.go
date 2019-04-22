@@ -79,7 +79,7 @@ func main() {
 	})
 	_ = client.SetGain(uint32(pc.Source.Gain * 10))
 
-	server = rtltcp.MakeRTLTCPServer(":1234")
+	server = rtltcp.MakeRTLTCPServer(pc.Server.RTLTCPAddress)
 	server.SetDongleInfo(client.GetDongleInfo())
 	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) {
 		if pc.Server.AllowControl {

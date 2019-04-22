@@ -25,7 +25,7 @@ const (
 )
 
 const (
-	ClientTimeout = 5 * time.Second
+	ClientTimeout = 10 * time.Second
 	pongWait      = 60 * time.Second
 	writeWait     = 2 * time.Second
 )
@@ -245,34 +245,36 @@ func (ws *Server) loop() {
 	files := AssetNames()
 
 	for _, f := range files {
-		urlPath := path.Join("/", f)
-		log.Debug("Registering file %s", urlPath)
-		router.HandleFunc(urlPath, func(w http.ResponseWriter, r *http.Request) {
+		if f != "settings.json" {
+			urlPath := path.Join("/", f)
+			log.Debug("Registering file %s", urlPath)
+			router.HandleFunc(urlPath, func(w http.ResponseWriter, r *http.Request) {
 
-			data, err := Asset(urlPath[1:])
-			if err != nil {
-				w.WriteHeader(500)
-				_, _ = w.Write([]byte("Internal Server Error"))
-				return
-			}
+				data, err := Asset(urlPath[1:])
+				if err != nil {
+					w.WriteHeader(500)
+					_, _ = w.Write([]byte("Internal Server Error"))
+					return
+				}
 
-			ext := path.Ext(urlPath)
-			mimeType := mime.TypeByExtension(ext)
+				ext := path.Ext(urlPath)
+				mimeType := mime.TypeByExtension(ext)
 
-			if mimeType == "" {
-				mimeType = mime.TypeByExtension(".bin")
-			}
+				if mimeType == "" {
+					mimeType = mime.TypeByExtension(".bin")
+				}
 
-			w.Header().Add("content-type", mimeType)
-			w.WriteHeader(200)
-			_, _ = w.Write(data)
-		})
+				w.Header().Add("content-type", mimeType)
+				w.WriteHeader(200)
+				_, _ = w.Write(data)
+			})
+		}
 	}
 
 	router.Handle("/metrics", metrics.GetHandler())
 	router.HandleFunc("/ws", ws.websocket)
 	router.HandleFunc("/settings.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", "text/json")
+		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(200)
 		_, _ = w.Write(ws.settings)
 	})

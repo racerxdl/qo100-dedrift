@@ -22,6 +22,7 @@ class Client {
   isSSL: boolean;
   websocketUrl: string;
   metricsUrl: string;
+  settingsUrl: string;
   metrics: Metric[];
   running: boolean;
   settings?: SettingsState;
@@ -37,6 +38,7 @@ class Client {
     this.isSSL = document.location.protocol !== 'http:';
     this.websocketUrl = `${this.isSSL ? 'wss://' : 'ws://'}${this.host}/ws`;
     this.metricsUrl = `${this.isSSL ? 'https://' : 'http://'}${this.host}/metrics`;
+    this.settingsUrl = `${this.isSSL ? 'https://' : 'http://'}${this.host}/settings.json`;
     this.tmp = false;
     this.metrics = [];
     this.serverSampleRate = 0;
@@ -49,7 +51,7 @@ class Client {
   }
 
   updateSettings = async () => {
-    const d = await fetch('/settings.json');
+    const d = await fetch(this.settingsUrl);
     this.settings = await d.json();
     if (this.onSettings && this.settings) {
       this.onSettings(this.settings);
