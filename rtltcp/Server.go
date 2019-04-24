@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/quan-to/slog"
+	"github.com/racerxdl/go.fifo"
 	"github.com/racerxdl/qo100-dedrift/metrics"
 	"net"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -15,11 +17,12 @@ import (
 )
 
 const defaultReadTimeout = time.Second
-const chunkLength = 1428
+const chunkLength = 4096
+const maxFifoLength = 64
 
 var log = slog.Scope("RTLTCP Server")
 
-type OnCommand func(sessionId string, cmd Command)
+type OnCommand func(sessionId string, cmd Command) bool
 type OnConnect func(sessionId string, address string)
 
 type Server struct {
@@ -33,6 +36,7 @@ type Server struct {
 	serverListener net.Listener
 	onCommandCb    OnCommand
 	onConnectCb    OnConnect
+	bufferFifo     *fifo.Queue
 }
 
 func MakeRTLTCPServer(address string) *Server {
@@ -46,6 +50,7 @@ func MakeRTLTCPServer(address string) *Server {
 			TunerType:      RtlsdrTunerR820t,
 			TunerGainCount: 0,
 		},
+		bufferFifo: fifo.NewQueue(),
 	}
 }
 
@@ -65,6 +70,7 @@ func (server *Server) Start() error {
 		server.waitClose = make(chan bool)
 		server.running = true
 		go server.loop()
+		go server.txLoop()
 		return nil
 	}
 
@@ -83,6 +89,11 @@ func (server *Server) Stop() {
 }
 
 func (server *Server) ComplexBroadcast(data []complex64) {
+	if server.bufferFifo.Len() > maxFifoLength {
+		log.Error("TX Fifo full!")
+		return
+	}
+
 	iqBytes := make([]byte, len(data)*2)
 
 	for i, v := range data {
@@ -107,10 +118,11 @@ func (server *Server) ComplexBroadcast(data []complex64) {
 		iqBytes[i*2] = uint8(rv)
 		iqBytes[i*2+1] = uint8(iv)
 	}
-	server.Broadcast(iqBytes)
+
+	server.bufferFifo.Add(iqBytes)
 }
 
-func (server *Server) Broadcast(data []byte) {
+func (server *Server) broadcast(data []byte) {
 	server.connectionLock.Lock()
 	chunks := len(data) / chunkLength
 	for i := 0; i < chunks; i++ {
@@ -137,6 +149,23 @@ func (server *Server) SetOnCommand(cb OnCommand) {
 	server.onCommandCb = cb
 }
 
+func (server *Server) txLoop() {
+	// Wait fifo to heat up
+	for server.running && server.bufferFifo.Len() < 4 {
+	}
+
+	for server.running {
+		// Now we can TX
+		if server.bufferFifo.Len() > 0 {
+			b := server.bufferFifo.Next().([]byte)
+			server.broadcast(b)
+			runtime.Gosched()
+		} else {
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+}
+
 func (server *Server) loop() {
 	for server.running {
 		// Listen for an incoming connection.
@@ -161,7 +190,10 @@ func (server *Server) handlePacket(session *Session, cmd Command) {
 	session.log.Debug("Received Type %s (%d) with arg (%d) %v", CommandTypeToName[cmd.Type], cmd.Type, uParam, cmd.Param)
 
 	if server.onCommandCb != nil {
-		server.onCommandCb(session.id, cmd)
+		ok := server.onCommandCb(session.id, cmd)
+		if !ok {
+			_ = session.conn.Close()
+		}
 	}
 }
 

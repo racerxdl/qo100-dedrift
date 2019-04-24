@@ -81,7 +81,17 @@ func main() {
 
 	server = rtltcp.MakeRTLTCPServer(pc.Server.RTLTCPAddress)
 	server.SetDongleInfo(client.GetDongleInfo())
-	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) {
+	server.SetOnCommand(func(sessionId string, cmd rtltcp.Command) bool {
+		if cmd.Type == rtltcp.SetSampleRate {
+			sampleRate := binary.BigEndian.Uint32(cmd.Param[:])
+			if sampleRate != pc.Source.SampleRate {
+				log.Error("Client asked for %d as sampleRate, but we cannot change it! Current: %d", sampleRate, pc.Source.SampleRate)
+				log.Error("Closing connection with %s", sessionId)
+				return false
+			}
+			return true
+		}
+
 		if pc.Server.AllowControl {
 			_ = client.SendCommand(cmd)
 			if cmd.Type == rtltcp.SetFrequency {
@@ -91,6 +101,8 @@ func main() {
 		} else {
 			log.Warn("Ignoring command %s because AllowControl is false", rtltcp.CommandTypeToName[cmd.Type])
 		}
+
+		return true
 	})
 
 	err = server.Start()
