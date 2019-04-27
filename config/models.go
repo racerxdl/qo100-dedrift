@@ -14,6 +14,7 @@ type ServerConfig struct {
 	MaxRTLConnections int
 	AllowControl      bool
 	WebSettings       WebSettings
+	RPC               RPCConfig
 }
 
 type AGCConfig struct {
@@ -59,4 +60,10 @@ type WebSettings struct {
 	HighQualityFFT bool             `json:"-"`
 	SegFFT         FFTWindowSetting `json:"segFFT"`
 	FullFFT        FFTWindowSetting `json:"fullFFT"`
+}
+
+type RPCConfig struct {
+	Enabled  bool
+	Username string
+	Password string
 }

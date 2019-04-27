@@ -10,6 +10,10 @@
   MaxWebConnections = 100
   MaxRTLConnections = 5
   AllowControl = true
+  [Server.RPC]
+    Enabled = true
+    Username = "admin"
+    Password = "admin"
   [Server.WebSettings]
     Name = "PU2NVX Server"
     HighQualityFFT = true

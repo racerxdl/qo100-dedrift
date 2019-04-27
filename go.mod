@@ -4,11 +4,18 @@ go 1.12
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/gofrs/uuid v3.2.0+incompatible
+	github.com/golang/protobuf v1.3.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.1
 	github.com/gorilla/websocket v1.4.0
+	github.com/improbable-eng/grpc-web v0.9.1
 	github.com/prometheus/client_golang v0.9.2
 	github.com/quan-to/slog v0.0.0-20190414172229-8bce0937f2c1
 	github.com/racerxdl/go.fifo v0.0.0-20190324175329-e4cbb374dbb0
 	github.com/racerxdl/segdsp v0.0.0-20190413213320-dfaea7c39d3a
+	github.com/rs/cors v1.6.0 // indirect
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/net v0.0.0-20190322120337-addf6b3196f6
+	google.golang.org/grpc v1.19.1
 )

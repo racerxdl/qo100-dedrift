@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.qo100dedrift";
+option java_outer_classname = "QO100DeDriftProto";
+
+package rpc;
+
+enum StatusType {
+    Invalid  = 0;
+    OK = 1;
+    Error = 2;
+}
+
+message LoginData {
+    StatusType Status = 1;
+    string Token = 2;
+}
+
+message ConfigReturn {
+    StatusType status = 1;
+    string Message = 2;
+}
+
+message LoginRequest {
+    string Timestamp = 1;
+    string Username = 2;
+    string HashedPassword = 3;
+    string Salt = 4;
+}
+
+message FrequencyData {
+    string Token = 1;
+    int64 Frequency = 2;
+}
+
+message GainData {
+    string Token = 1;
+    uint32 Gain = 2;
+}
+
+message FFTConfigData {
+    string Token = 1;
+    int32 MaxVal = 2;
+    uint32 Range = 3;
+    uint32 Width = 4;
+    uint32 Height = 5;
+}
+
+service Configuration {
+    rpc Login(LoginRequest) returns (LoginData);
+    rpc SetCenterFrequency(FrequencyData) returns (ConfigReturn);
+    rpc SetGain(GainData) returns (ConfigReturn);
+    rpc SetBeaconOffset(FrequencyData) returns (ConfigReturn);
+
+    rpc SetFullFFTConfig(FFTConfigData) returns (ConfigReturn);
+    rpc SetSegFFTConfig(FFTConfigData) returns (ConfigReturn);
+}

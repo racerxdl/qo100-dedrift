@@ -15,6 +15,9 @@ const (
 	DefaultAllowControl      = true
 	DefaultMaxWebConnections = 100
 	DefaultMaxRTLConnections = 5
+	DefaultRPCEnabled        = true
+	DefaultRPCUsername       = "admin"
+	DefaultRPCPassword       = "admin"
 )
 
 const (
@@ -71,6 +74,11 @@ var DefaultConfig = ProgramConfig{
 				Height: DefaultFFTWindowHeight,
 			},
 		},
+		RPC: RPCConfig{
+			Enabled:  DefaultRPCEnabled,
+			Username: DefaultRPCUsername,
+			Password: DefaultRPCPassword,
+		},
 	},
 	Processing: ProcessingConfig{
 		BeaconOffset:   DefaultBeaconOffset,
@@ -91,3 +99,7 @@ var DefaultConfig = ProgramConfig{
 		},
 	},
 }
+
+const (
+	ConfigFileName = "qo100.toml"
+)

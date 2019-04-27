@@ -1,4 +1,4 @@
-package main
+package dedrift
 
 import (
 	"github.com/racerxdl/segdsp/dsp"
@@ -15,25 +15,18 @@ const (
 	FFTAveraging = 2
 )
 
-var lastFFT = time.Now()
-var onFFT func(segFFT, fullFFT []float32)
-var fftWindow []float64
-
-var lastFullFFT = make([]float32, fftSize)
-var lastSegFFT = make([]float32, fftSize)
-
-func ComputeFFT(sampleRate float32, samples []complex64, lastFFT []float32) []float32 {
+func (w *Worker) computeFFT(sampleRate float32, samples []complex64, lastFFT []float32) []float32 {
 	samples = samples[:fftSize]
 
-	if len(fftWindow) != fftSize {
-		fftWindow = dsp.HammingWindow(fftSize)
+	if len(w.fftWindow) != fftSize {
+		w.fftWindow = dsp.HammingWindow(fftSize)
 	}
 
 	// Apply window to samples
 	for j := 0; j < len(samples); j++ {
 		var s = samples[j]
-		var r = real(s) * float32(fftWindow[j])
-		var i = imag(s) * float32(fftWindow[j])
+		var r = real(s) * float32(w.fftWindow[j])
+		var i = imag(s) * float32(w.fftWindow[j])
 		samples[j] = complex(r, i)
 	}
 
@@ -65,7 +58,7 @@ func ComputeFFT(sampleRate float32, samples []complex64, lastFFT []float32) []fl
 	return fftSamples
 }
 
-func ComputeHQFFT(sampleRate float32, samples []complex64, lastFFT []float32) []float32 {
+func (w *Worker) computeHQFFT(sampleRate float32, samples []complex64, lastFFT []float32) []float32 {
 	hqFFTLength := int(fftSize)
 
 	for _, v := range fftN {
@@ -80,15 +73,15 @@ func ComputeHQFFT(sampleRate float32, samples []complex64, lastFFT []float32) []
 
 	samples = samples[:hqFFTLength]
 
-	if len(fftWindow) != hqFFTLength {
-		fftWindow = dsp.HammingWindow(hqFFTLength)
+	if len(w.fftWindow) != hqFFTLength {
+		w.fftWindow = dsp.HammingWindow(hqFFTLength)
 	}
 
 	// Apply window to samples
 	for j := 0; j < len(samples); j++ {
 		var s = samples[j]
-		var r = real(s) * float32(fftWindow[j])
-		var i = imag(s) * float32(fftWindow[j])
+		var r = real(s) * float32(w.fftWindow[j])
+		var i = imag(s) * float32(w.fftWindow[j])
 		samples[j] = complex(r, i)
 	}
 
@@ -128,6 +121,6 @@ func ComputeHQFFT(sampleRate float32, samples []complex64, lastFFT []float32) []
 	return fftSamples
 }
 
-func SetOnFFT(cb func(segFFT, fullFFT []float32)) {
-	onFFT = cb
+func (w *Worker) SetOnFFT(cb OnFFTCallback) {
+	w.onFFT = cb
 }
