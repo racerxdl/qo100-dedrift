@@ -9,7 +9,7 @@ import (
 func GeneratePassword(salt, password, timestamp string) string {
 	s := sha3.New512()
 	h := fmt.Sprintf("%s%s%s", timestamp, salt, password)
-	s.Write([]byte(h))
+	_, _ = s.Write([]byte(h))
 
 	return hex.EncodeToString(s.Sum(nil))
 }

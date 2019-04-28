@@ -35,10 +35,10 @@ func MakeRPCServer(username, password string, rc RemoteControl) *Server {
 	return s
 }
 
-func (s *Server) RegisterURLs(r *mux.Route) {
+func (s *Server) RegisterURLs(r *mux.Router) {
 	resources := grpcweb.ListGRPCResources(s.grpc)
 	for _, resource := range resources {
-		r.HandleFunc(resource, p.ServeHTTP)
+		r.HandleFunc(resource, s.ServeHTTP)
 	}
 }
 

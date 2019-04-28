@@ -50,6 +50,7 @@ type Server struct {
 	cLock        sync.Mutex
 	maxWsClients int
 	settings     []byte
+	router       *mux.Router
 }
 
 func MakeWebServer(address string, maxWsClients int, settings config.WebSettings) *Server {
@@ -67,7 +68,12 @@ func MakeWebServer(address string, maxWsClients int, settings config.WebSettings
 		cLock:        sync.Mutex{},
 		maxWsClients: maxWsClients,
 		settings:     s,
+		router:       mux.NewRouter(),
 	}
+}
+
+func (ws *Server) RegisterRPC(c func(r *mux.Router)) {
+	c(ws.router)
 }
 
 func (ws *Server) putClient(c *wsClient) {
@@ -238,8 +244,8 @@ func (ws *Server) Stop() {
 }
 
 func (ws *Server) loop() {
+	router := ws.router
 	srv := &http.Server{}
-	router := mux.NewRouter()
 	srv.Handler = router
 
 	files := AssetNames()

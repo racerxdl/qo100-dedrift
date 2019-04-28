@@ -6,6 +6,7 @@ import (
 	"github.com/racerxdl/qo100-dedrift/config"
 	"github.com/racerxdl/qo100-dedrift/dedrift"
 	"github.com/racerxdl/qo100-dedrift/metrics"
+	"github.com/racerxdl/qo100-dedrift/rpc"
 	"github.com/racerxdl/qo100-dedrift/rtltcp"
 	"github.com/racerxdl/qo100-dedrift/web"
 	"os"
@@ -105,6 +106,10 @@ func main() {
 		ws.BroadcastFFT(web.MessageTypeMainFFT, fullFFT)
 		ws.BroadcastFFT(web.MessageTypeSegFFT, segFFT)
 	})
+	// endregion
+	// region RPC
+	rpcServer := rpc.MakeRPCServer(pc.Server.RPC.Username, pc.Server.RPC.Password, worker)
+	ws.RegisterRPC(rpcServer.RegisterURLs)
 	// endregion
 	// region Main Loop Setup
 	worker.Start()

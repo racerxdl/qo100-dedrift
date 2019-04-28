@@ -62,6 +62,7 @@ func (s *Server) SetGain(ctx context.Context, c *GainData) (*ConfigReturn, error
 		}, nil
 	}
 
+	log.Debug("Updating Gain")
 	err := s.rc.SetGain(c.Gain)
 	if err != nil {
 		return &ConfigReturn{
@@ -84,6 +85,7 @@ func (s *Server) SetBeaconOffset(ctx context.Context, c *FrequencyData) (*Config
 		}, nil
 	}
 
+	log.Debug("Updating Beacon Offset")
 	err := s.rc.SetBeaconOffset(float32(c.Frequency))
 	if err != nil {
 		return &ConfigReturn{
@@ -105,6 +107,7 @@ func (s *Server) SetFullFFTConfig(ctx context.Context, c *FFTConfigData) (*Confi
 			Message: "Invalid Token",
 		}, nil
 	}
+	log.Debug("Updating Full FFT Config")
 	err := s.rc.SetFullFFTConfig(config.FFTWindowSetting{
 		MaxVal: int(c.MaxVal),
 		Range:  int(c.Range),
@@ -132,6 +135,7 @@ func (s *Server) SetSegFFTConfig(ctx context.Context, c *FFTConfigData) (*Config
 		}, nil
 	}
 
+	log.Debug("Updating Beacon FFT Config")
 	err := s.rc.SetSegFFTConfig(config.FFTWindowSetting{
 		MaxVal: int(c.MaxVal),
 		Range:  int(c.Range),
